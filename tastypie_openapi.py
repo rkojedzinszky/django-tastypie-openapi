@@ -6,7 +6,7 @@ from django.views import View
 from django.http.response import HttpResponse
 from django.core.exceptions import ImproperlyConfigured, FieldDoesNotExist
 from tastypie.api import Api
-from tastypie import resources, fields
+from tastypie import resources, fields, exceptions
 
 __all__ = ['SchemaView', 'RawForeignKey']
 
@@ -459,12 +459,20 @@ class RawForeignKey(fields.RelatedField):
         if value is None:
             return value
 
-        fk_resource = self.to_class()
-        fk_bundle = fk_resource.build_bundle(
-            request=bundle.request,
-        )
+        if isinstance(value, str):
+            # We got a raw pkey. Load the object and assign it.
+            fk_resource = self.to_class()
+            fk_bundle = fk_resource.build_bundle(
+                request=bundle.request,
+            )
 
-        return fk_resource.obj_get(fk_bundle, pk=value)
+            return fk_resource.obj_get(fk_bundle, pk=value)
+        elif hasattr(value, 'pk'):
+            return value
+        else:
+            raise exceptions.ApiFieldError(
+                "The '%s' field was given data that was not a raw pkey and does not have a 'pk' attribute: %s."
+                % (self.instance_name, value))
 
     def dehydrate(self, bundle, for_list):
         return getattr(bundle.obj, self.attribute + '_id')
