@@ -186,13 +186,19 @@ class SchemaView(View):
             model = cls._meta.object_class
 
             # process fields
-            # create a schema without primary key
             # collect primary key
-            partialSchemaName = '{}Partial'.format(resource_name)
+            wSchemaName = '{}W'.format(resource_name)
+            rSchemaName = '{}R'.format(resource_name)
             primary_key = None
             fieldSchema = {}
 
-            schema = {
+            rschema = {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            }
+
+            wschema = {
                 "type": "object",
                 "properties": {},
                 "required": [],
@@ -214,35 +220,44 @@ class SchemaView(View):
                             df = model._meta.get_field(fd.attribute)
                             if df.primary_key:
                                 primary_key = f
-                                continue
+                                # continue
                     except FieldDoesNotExist:
                         pass
 
-                schema["required"].append(f)
+                s = rschema if fd.readonly else wschema
+                if not fd.null:
+                    s["required"].append(f)
 
-                schema["properties"][f] = fieldSchema[f]
+                s["properties"][f] = fieldSchema[f]
 
-            partialSchema = Object(schema)
-            openapischema.register_schema(partialSchemaName, partialSchema)
+            if wschema["properties"]:
+                wSchema = Object(wschema)
+                openapischema.register_schema(wSchemaName, wSchema)
 
-            fullSchema = partialSchema
+            if rschema["properties"]:
+                rSchema = Object(rschema)
+                openapischema.register_schema(rSchemaName, rSchema)
 
-            if primary_key:
+            if wschema["properties"] and rschema["properties"]:
+                # Combine rSchema and wSchema
                 fullSchemaName = resource_name
                 fullSchema = Object({
                     "allOf": [
-                        {
-                            "type": "object",
-                            "properties": {
-                                primary_key: fieldSchema[primary_key],
-                            },
-                            "required": [primary_key],
-                        },
-                        partialSchema,
+                        rSchema,
+                        wSchema,
                     ]
                 })
 
                 openapischema.register_schema(fullSchemaName, fullSchema)
+
+            elif wschema["properties"]:
+                fullSchemaName = wSchemaName
+                fullSchema = wSchema
+
+            elif rschema["properties"]:
+                fullSchemaName = rSchemaName
+                fullSchema = rSchema
+
 
             operations = {}
             if 'get' in cls._meta.list_allowed_methods:
@@ -286,7 +301,7 @@ class SchemaView(View):
                 "description": "Values for {}".format(resource_name),
                 "content": {
                     "application/json": {
-                        "schema": partialSchema,
+                        "schema": wSchema,
                     },
                 }
             })
@@ -385,7 +400,7 @@ class SchemaView(View):
                     operations['put'] = op
 
                 if 'patch' in cls._meta.detail_allowed_methods:
-                    patchSchema = Object(copy.deepcopy(partialSchema.content))
+                    patchSchema = Object(copy.deepcopy(wSchema.content))
                     patchSchema.content.pop("required")
 
                     op = {
