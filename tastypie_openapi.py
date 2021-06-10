@@ -258,7 +258,6 @@ class SchemaView(View):
                 fullSchemaName = rSchemaName
                 fullSchema = rSchema
 
-
             operations = {}
             if 'get' in cls._meta.list_allowed_methods:
                 params = []
@@ -289,7 +288,8 @@ class SchemaView(View):
                                                 "items": fullSchema,
                                             },
                                         },
-                                    }
+                                        "required": ["meta", "objects"],
+                                    },
                                 },
                             },
                         },
