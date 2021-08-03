@@ -1,6 +1,7 @@
 import copy
 import json
 import typing
+import six
 from django.db.models import fields as djangofields
 from django.views import View
 from django.http.response import HttpResponse
@@ -463,34 +464,24 @@ class SchemaView(View):
         return HttpResponse(json.dumps(openapischema, cls=JSONEncoder))
 
 
-class RawForeignKey(fields.RelatedField):
+class RawForeignKey(fields.ToOneField):
     """
     RawForeignKey exposes raw foreign key values
     """
-    is_related = False
-
-    def hydrate(self, bundle):
-        value = super().hydrate(bundle)
-        if value is None:
-            return value
-
-        if isinstance(value, str):
-            # We got a raw pkey. Load the object and assign it.
-            fk_resource = self.to_class()
-            fk_bundle = fk_resource.build_bundle(
-                request=bundle.request,
-            )
-
-            return fk_resource.obj_get(fk_bundle, pk=value)
-        elif hasattr(value, 'pk'):
-            return value
-        else:
-            raise exceptions.ApiFieldError(
-                "The '%s' field was given data that was not a raw pkey and does not have a 'pk' attribute: %s."
-                % (self.instance_name, value))
 
     def dehydrate(self, bundle, for_list):
         return getattr(bundle.obj, self.attribute + '_id')
+
+    def build_related_resource(self, value, request=None, related_obj=None, related_name=None):
+        if isinstance(value, six.string_types):
+            fk_resource = self.to_class()
+
+            bundle = fk_resource.build_bundle(request=request)
+            bundle.obj = fk_resource.obj_get(bundle=bundle, pk=value)
+
+            return fk_resource.full_dehydrate(bundle)
+
+        return super().build_related_resource(value, request=request, related_obj=related_obj, related_name=related_name)
 
     @property
     def dehydrated_type(self):
