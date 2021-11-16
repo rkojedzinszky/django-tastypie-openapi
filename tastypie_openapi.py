@@ -124,7 +124,7 @@ class SchemaView(View):
                 fk_className, fk_pkcol.capitalize()))
 
         schema = {
-            "description": tfield.verbose_name,
+            "description": tfield.verbose_name or 'NO_DESCRIPTION',
             "type": fieldToOASType(tfield),
         }
         if tfield.null:
