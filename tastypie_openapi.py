@@ -322,6 +322,9 @@ class SchemaView(View):
                             "headers": {
                                 "Location": {
                                     "description": "URI of created {}".format(resource_name),
+                                    "schema": {
+                                        "type": "string",
+                                    },
                                 },
                             },
                         },
