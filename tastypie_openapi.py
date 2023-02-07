@@ -137,10 +137,10 @@ class SchemaView(View):
                 djangofield = model._meta.get_field(tfield.attribute)
                 if isinstance(djangofield, djangofields.UUIDField):
                     format = 'uuid'
-                elif isinstance(djangofield, djangofields.DateField):
-                    format = 'date'
                 elif isinstance(djangofield, djangofields.DateTimeField):
                     format = 'date-time'
+                elif isinstance(djangofield, djangofields.DateField):
+                    format = 'date'
 
                 if djangofield.choices:
                     enum = [
