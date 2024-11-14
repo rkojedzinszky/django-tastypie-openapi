@@ -1,13 +1,12 @@
 import copy
 import json
 import typing
-import six
 from django.db.models import fields as djangofields
 from django.views import View
 from django.http.response import HttpResponse
 from django.core.exceptions import ImproperlyConfigured, FieldDoesNotExist
 from tastypie.api import Api
-from tastypie import resources, fields, exceptions
+from tastypie import resources, fields
 
 __all__ = ['SchemaView', 'RawForeignKey']
 
