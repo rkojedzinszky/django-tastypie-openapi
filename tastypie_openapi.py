@@ -475,16 +475,13 @@ class RawForeignKey(fields.ToOneField):
     def dehydrate(self, bundle, for_list):
         return getattr(bundle.obj, self.attribute + '_id')
 
-    def build_related_resource(self, value, request=None, related_obj=None, related_name=None):
-        if isinstance(value, six.string_types):
-            fk_resource = self.to_class()
+    def build_related_resource(self, value, request):
+        fk_resource = self.to_class()
 
-            bundle = fk_resource.build_bundle(request=request)
-            bundle.obj = fk_resource.obj_get(bundle=bundle, pk=value)
+        bundle = fk_resource.build_bundle(request=request)
+        bundle.obj = fk_resource.obj_get(bundle=bundle, pk=value)
 
-            return fk_resource.full_dehydrate(bundle)
-
-        return super().build_related_resource(value, request=request, related_obj=related_obj, related_name=related_name)
+        return fk_resource.full_dehydrate(bundle)
 
     @property
     def dehydrated_type(self):
