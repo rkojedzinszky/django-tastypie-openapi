@@ -230,12 +230,12 @@ class SchemaView(View):
 
                 s["properties"][f] = fieldSchema[f]
 
+            wSchema = Object(wschema)
             if wschema["properties"]:
-                wSchema = Object(wschema)
                 openapischema.register_schema(wSchemaName, wSchema)
 
+            rSchema = Object(rschema)
             if rschema["properties"]:
-                rSchema = Object(rschema)
                 openapischema.register_schema(rSchemaName, rSchema)
 
             if wschema["properties"] and rschema["properties"]:
