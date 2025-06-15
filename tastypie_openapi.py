@@ -190,6 +190,7 @@ class SchemaView(View):
             wSchemaName = '{}W'.format(resource_name)
             rSchemaName = '{}R'.format(resource_name)
             primary_key = None
+            notnull_unique_key = None
             fieldSchema = {}
 
             rschema = {
@@ -224,11 +225,17 @@ class SchemaView(View):
                     except FieldDoesNotExist:
                         pass
 
+                if notnull_unique_key is None:
+                    if fd.unique and not fd.null:
+                        notnull_unique_key = f
+
                 s = rschema if fd.readonly else wschema
                 if not fd.null:
                     s["required"].append(f)
 
                 s["properties"][f] = fieldSchema[f]
+
+            primary_key = primary_key or notnull_unique_key
 
             wSchema = Object(wschema)
             if wschema["properties"]:
