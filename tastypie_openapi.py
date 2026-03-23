@@ -13,6 +13,10 @@ __all__ = ['SchemaView', 'RawForeignKey']
 VERSION = "3.0.3"
 
 
+def to_camelcase(s: str) -> str:
+    return ''.join(i.capitalize() for i in s.split('_') if i)
+
+
 def fieldToOASType(f: fields.ApiField) -> str:
     if isinstance(f, fields.IntegerField):
         return 'integer'
@@ -120,7 +124,7 @@ class SchemaView(View):
             fk_pkcol = fk_class._meta.object_class._meta.pk.name
 
             return DelayedSchema(self._schemacache, '{}{}'.format(
-                fk_className, fk_pkcol.capitalize()))
+                fk_className, to_camelcase(fk_pkcol)))
 
         schema = {
             "description": tfield.verbose_name or 'NO_DESCRIPTION',
@@ -210,7 +214,7 @@ class SchemaView(View):
                     continue
 
                 fieldSchema[f] = self.field_to_schema(model, fd)
-                fieldName = '{}{}'.format(resource_name, f.capitalize())
+                fieldName = '{}{}'.format(resource_name, to_camelcase(f))
                 self._schemacache[fieldName] = fieldSchema[f]
 
                 openapischema.register_schema(fieldName, fieldSchema[f])
