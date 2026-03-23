@@ -12,6 +12,9 @@ __all__ = ['SchemaView', 'RawForeignKey']
 
 VERSION = "3.0.3"
 
+# Tastypie's internal resource_uri field
+_TASTYPIE_RESOURCE_URI_FIELD = 'resource_uri'
+
 
 def to_camelcase(s: str) -> str:
     return ''.join(i.capitalize() for i in s.split('_') if i)
@@ -126,6 +129,13 @@ class SchemaView(View):
             return DelayedSchema(self._schemacache, '{}{}'.format(
                 fk_className, to_camelcase(fk_pkcol)))
 
+        if isinstance(tfield, fields.ToOneField):
+            fk_class = tfield.to_class
+            fk_className = fk_class.__name__.replace('Resource', '')
+
+            return DelayedSchema(self._schemacache, '{}{}'.format(
+                fk_className, to_camelcase(_TASTYPIE_RESOURCE_URI_FIELD)))
+
         schema = {
             "description": tfield.verbose_name or 'NO_DESCRIPTION',
             "type": fieldToOASType(tfield),
@@ -210,9 +220,6 @@ class SchemaView(View):
             }
 
             for f, fd in cls.fields.items():
-                if f == "resource_uri":
-                    continue
-
                 fieldSchema[f] = self.field_to_schema(model, fd)
                 fieldName = '{}{}'.format(resource_name, to_camelcase(f))
                 self._schemacache[fieldName] = fieldSchema[f]
