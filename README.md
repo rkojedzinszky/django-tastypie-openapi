@@ -12,7 +12,7 @@ Then add to your urls.py:
 
 ```python
 ...
-from tastypie_openapi import SchemaView
+from django_tastypie_openapi import SchemaView
 ...
 
 urlpatterns = [

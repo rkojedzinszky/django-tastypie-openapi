@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/rkojedzinszky/django-tastypie-openapi",
     py_modules=[
-        "tastypie_openapi",
+        "django_tastypie_openapi",
     ],
     install_requires=[
         "django",
