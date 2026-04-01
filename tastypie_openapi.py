@@ -193,6 +193,7 @@ class SchemaView(View):
 
         for name, cls in self.api._registry.items():
             resource_name = cls.__class__.__name__.replace('Resource', '')
+            location_schema = {'type': 'string'}
             endpoint = self.api._build_reverse_url("api_dispatch_list", kwargs={
                 'api_name': self.api.api_name,
                 'resource_name': name,
@@ -221,6 +222,8 @@ class SchemaView(View):
 
             for f, fd in cls.fields.items():
                 fieldSchema[f] = self.field_to_schema(model, fd)
+                if f == _TASTYPIE_RESOURCE_URI_FIELD:
+                    location_schema = fieldSchema[f]
                 fieldName = '{}{}'.format(resource_name, to_camelcase(f))
                 self._schemacache[fieldName] = fieldSchema[f]
 
@@ -339,9 +342,7 @@ class SchemaView(View):
                             "headers": {
                                 "Location": {
                                     "description": "URI of created {}".format(resource_name),
-                                    "schema": {
-                                        "type": "string",
-                                    },
+                                    "schema": location_schema,
                                 },
                             },
                         },
