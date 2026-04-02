@@ -145,7 +145,7 @@ class SchemaView(View):
 
         format = None
         enum = None
-        if tfield.attribute is not None:
+        if model and tfield.attribute is not None:
             try:
                 djangofield = model._meta.get_field(tfield.attribute)
                 if isinstance(djangofield, djangofields.UUIDField):
@@ -231,7 +231,7 @@ class SchemaView(View):
 
                 if primary_key is None:
                     try:
-                        if fd.attribute is not None:
+                        if model and fd.attribute is not None:
                             df = model._meta.get_field(fd.attribute)
                             if df.primary_key:
                                 primary_key = f
