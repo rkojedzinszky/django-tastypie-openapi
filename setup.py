@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="django-tastypie-openapi",
-    version="0.1.0",
+    version="0.1.1",
     author="Richard Kojedzinszky",
     author_email="richard@kojedz.in",
     description="Generate Openapi specification for Django-Tastypie",
