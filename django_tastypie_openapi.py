@@ -482,7 +482,10 @@ class SchemaView(View):
                 if operations:
                     openapischema.paths[detailendpoint] = operations
 
-        return HttpResponse(json.dumps(openapischema, cls=JSONEncoder))
+        return HttpResponse(
+            content=json.dumps(openapischema, cls=JSONEncoder),
+            headers={'Content-Type': 'application/json'},
+        )
 
 
 class RawForeignKey(fields.ToOneField):
