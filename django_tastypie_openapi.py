@@ -140,14 +140,7 @@ class SchemaView(View):
     ) -> Union[Object, DelayedSchema]:
         """Convert a Tastypie field to an OpenAPI schema object."""
         if isinstance(tfield, RawForeignKey):
-            fk_class = tfield.to_class
-            fk_className = fk_class.__name__.replace('Resource', '')
-            fk_pkcol = fk_class._meta.object_class._meta.pk.name
-
-            return DelayedSchema(
-                self._schemacache,
-                f'{fk_className}{to_camelcase(fk_pkcol)}'
-            )
+            return self.related_pk_schema(tfield)
 
         if isinstance(tfield, fields.ToManyField):
             fk_class = tfield.to_class
@@ -208,6 +201,30 @@ class SchemaView(View):
             schema["enum"] = enum
 
         return Object(schema)
+
+    def related_pk_schema(self, tfield: fields.RelatedField) -> DelayedSchema:
+        """Return the schema of the related object's primary key."""
+        fk_class = tfield.to_class
+        fk_className = fk_class.__name__.replace('Resource', '')
+        fk_pkcol = fk_class._meta.object_class._meta.pk.name
+
+        return DelayedSchema(
+            self._schemacache,
+            f'{fk_className}{to_camelcase(fk_pkcol)}'
+        )
+
+    def filter_to_schema(
+        self, tfield: fields.ApiField, field_schema: Union[Object, DelayedSchema]
+    ) -> Union[Object, DelayedSchema]:
+        """Convert a Tastypie field to the OpenAPI schema object of its filter value.
+
+        Tastypie filters work on raw values, therefore related fields are
+        filtered by the related object's primary key instead of the resource URI.
+        """
+        if getattr(tfield, 'is_related', False):
+            return self.related_pk_schema(tfield)
+
+        return field_schema
 
     def get(self, request) -> HttpResponse:
         openapischema = Schema(title=self.title, version=self.version)
@@ -332,7 +349,7 @@ class SchemaView(View):
                         "name": f,
                         "in": "query",
                         "required": False,
-                        "schema": fieldSchema[f],
+                        "schema": self.filter_to_schema(cls.fields[f], fieldSchema[f]),
                     }))
 
                 operations['get'] = {
